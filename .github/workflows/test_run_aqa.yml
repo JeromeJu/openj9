@@ -1,0 +1,26 @@
+name:  "Testing new TKG workflow run aqa"
+
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  parseComment:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.comment.body, 'run aqa') && github.event.issue.pull_request
+    outputs:
+      workflow_url: ${{ steps.workflow_run_info.outputs.url }}
+      workflow_id: ${{ steps.workflow_run_info.outputs.id }}
+      build_parameters: ${{ steps.argparse.outputs.build_parameters }}
+      failed: ${{ steps.failure_report.outputs.failed }} # For reportStatus to check if parseComment has already reported a failure (in parsing).
+    steps:
+    - name: Checkout main TKG repo
+      uses: actions/checkout@v2
+      with:
+        repository: 'JeromeJu/TKG.git'
+        ref: 'test_run_aqa'
+        path: 'TKG'
+    - name: Parse parameters
+      env:
+        args: ${{ github.event.comment.body }}
+      run: python3 TKG/scripts/testBot/runAqaArgParse.py $args 2> log.txt
+      id: argparse
